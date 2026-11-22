@@ -1,0 +1,157 @@
+# SPDX-FileCopyrightText: 2026 KOGA Mitsuhiro
+# SPDX-License-Identifier: MIT
+
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version matching Cargo.toml (for example v0.1.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_VERSION: 1.96.0
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify source licenses and SDK generation
+        run: |
+          python3 scripts/check_licenses.py
+          python3 scripts/prepare_sdk.py
+          python3 scripts/test_prepare_sdk.py
+      - name: Validate version and reject an existing tag
+        id: version
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+          PYTHONPATH: scripts
+        run: |
+          VERSION=$(python3 -c 'import os; from package_release import ROOT, version_for; print(version_for(ROOT, os.environ["REQUESTED_VERSION"]))')
+          if git rev-parse --verify "refs/tags/$VERSION" >/dev/null 2>&1; then
+            echo "::error::Tag $VERSION already exists."
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: prepare
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            os: windows-2022
+            target: x86_64-pc-windows-msvc
+            addon: demo/addons/kyber
+          - platform: linux
+            os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            addon: demo/addons/kyber
+          - platform: macos
+            os: macos-15
+            target: aarch64-apple-darwin
+            addon: demo/addons/kyber
+          - platform: android
+            os: windows-2022
+            target: aarch64-linux-android
+            addon: target/android-addon/addons/kyber
+          - platform: ios
+            os: macos-15
+            target: aarch64-apple-ios
+            addon: target/ios-addon/addons/kyber
+    env:
+      MACOSX_DEPLOYMENT_TARGET: '11.0'
+      IPHONEOS_DEPLOYMENT_TARGET: '15.0'
+      CARGO_INCREMENTAL: 0
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.platform }}
+      - name: Install Linux dependencies
+        if: matrix.platform == 'linux'
+        run: sudo bash scripts/install_linux_deps.sh
+      - name: Install Android NDK
+        if: matrix.platform == 'android'
+        shell: pwsh
+        run: |
+          & "$env:ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager.bat" "ndk;27.2.12479018"
+          if ($LASTEXITCODE -ne 0) { throw 'Android NDK installation failed' }
+      - name: Build Windows addon
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: ./scripts/build.ps1 -Release
+      - name: Build Linux or macOS addon
+        if: matrix.platform == 'linux' || matrix.platform == 'macos'
+        run: bash scripts/build.sh --release
+      - name: Build Android addon
+        if: matrix.platform == 'android'
+        shell: pwsh
+        run: ./scripts/build_android.ps1 -Release -Ndk "$env:ANDROID_HOME/ndk/27.2.12479018"
+      - name: Build iOS framework
+        if: matrix.platform == 'ios'
+        run: bash scripts/build_ios.sh --release
+      - uses: actions/upload-artifact@v7
+        with:
+          name: addon-${{ matrix.platform }}
+          path: ${{ matrix.addon }}/
+          if-no-files-found: error
+          retention-days: 7
+
+  package:
+    needs: [prepare, build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: addon-*
+          path: staged
+      - name: Assemble addon and demo archives
+        env:
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+        run: python3 scripts/package_release.py --staged staged --version "$RELEASE_VERSION"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-packages
+          path: target/packages/release/*.zip
+          if-no-files-found: error
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          gh release create "$RELEASE_VERSION" \
+            --target "$GITHUB_SHA" --title "$RELEASE_VERSION" --generate-notes \
+            "target/packages/release/godot-kyber-$RELEASE_VERSION.zip" \
+            "target/packages/release/godot-kyber-demo-$RELEASE_VERSION.zip"

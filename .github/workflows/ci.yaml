@@ -1,0 +1,282 @@
+# SPDX-FileCopyrightText: 2026 KOGA Mitsuhiro
+# SPDX-License-Identifier: MIT
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_VERSION: 1.96.0
+  GODOT_VERSION: 4.7.2-stable
+
+jobs:
+  ios:
+    name: iOS arm64 cross-build
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          targets: aarch64-apple-ios
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ios-arm64
+      - name: Build iOS framework
+        run: bash scripts/build_ios.sh --release
+      - uses: actions/upload-artifact@v6
+        with:
+          name: godot-kyber-ios-arm64-build
+          path: target/ios-addon/
+          if-no-files-found: error
+          retention-days: 14
+
+  android:
+    name: Android arm64 cross-build
+    runs-on: windows-2022
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          targets: aarch64-linux-android
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: android-arm64
+      - name: Install Ninja for static Opus
+        shell: pwsh
+        run: choco install ninja --no-progress -y
+      - name: Install Android NDK
+        shell: pwsh
+        run: |
+          & "$env:ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager.bat" "ndk;27.2.12479018"
+          if ($LASTEXITCODE -ne 0) { throw 'Android NDK installation failed' }
+      - name: Build Android addon and device tests
+        shell: pwsh
+        run: ./scripts/build_android.ps1 -Release -BuildTests -Ndk "$env:ANDROID_HOME/ndk/27.2.12479018"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: godot-kyber-android-arm64-build
+          path: target/android-addon/
+          if-no-files-found: error
+          retention-days: 14
+
+  format:
+    name: Rust formatting
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Check project license coverage
+        run: python3 scripts/check_licenses.py
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt
+      - name: Prepare SDK and extract licensed compatibility types
+        run: python3 scripts/prepare_sdk.py
+      - name: Verify SDK source generation
+        run: python3 scripts/test_prepare_sdk.py
+      - run: cargo fmt --check
+      - run: cargo fmt --manifest-path media/Cargo.toml --check
+      - name: Verify release package layout and validation
+        run: python3 scripts/test_package_release.py
+
+  windows:
+    name: Windows build and Godot tests
+    runs-on: windows-2022
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: windows-release-godot-tests
+      - name: Install Godot
+        run: |
+          $directory = Join-Path $env:RUNNER_TEMP 'godot'
+          ./scripts/install_godot.ps1 -Version $env:GODOT_VERSION -Destination $directory -ExportTemplates
+          $executable = Join-Path $directory "Godot_v$($env:GODOT_VERSION)_win64_console.exe"
+          "GODOT=$executable" >> $env:GITHUB_ENV
+
+      - name: Install FFmpeg for video integration tests
+        run: |
+          choco install ffmpeg --yes --no-progress
+          if ($LASTEXITCODE -ne 0) { throw 'FFmpeg installation failed' }
+
+      - name: Check Rust and test release DLL with GUT
+        run: |
+          New-Item -ItemType Directory -Force target/ci | Out-Null
+          Start-Transcript -Path target/ci/tests.log
+          try {
+            ./scripts/test.ps1 -Godot $env:GODOT -Release
+          } finally {
+            Stop-Transcript
+          }
+
+      - name: Verify exported runtime
+        run: ./scripts/test_export.ps1 -Godot $env:GODOT
+
+      - name: Package tested addon
+        run: ./scripts/package.ps1
+
+      - name: Upload Windows addon
+        uses: actions/upload-artifact@v6
+        with:
+          name: godot-kyber-windows-x86_64
+          path: target/packages/*.zip
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload test reports and logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: windows-test-results
+          path: |
+            target/test-results/*.xml
+            target/ci/tests.log
+            target/video-processes/*/*.json
+            target/video-processes/*/*.log
+            target/rpc-processes/*/*.json
+            target/rpc-processes/*/*.log
+            target/export-smoke/*/*.log
+            target/test-results/**/*.json
+            target/test-results/**/*.log
+          if-no-files-found: warn
+          retention-days: 14
+
+  linux:
+    name: Linux build and Godot tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: linux-release-godot-tests
+      - name: Install build and test dependencies
+        run: sudo bash scripts/install_linux_deps.sh
+      - name: Install Godot
+        run: |
+          python3 scripts/install_godot.py --version "$GODOT_VERSION" --destination "$RUNNER_TEMP/godot"
+          echo "GODOT=$RUNNER_TEMP/godot/Godot_v${GODOT_VERSION}_linux.x86_64" >> "$GITHUB_ENV"
+      - name: Build and test
+        run: |
+          mkdir -p target/ci
+          set -o pipefail
+          bash scripts/test_linux.sh 2>&1 | tee target/ci/linux-tests.log
+      - name: Package tested addon
+        run: python3 scripts/package_linux.py
+      - uses: actions/upload-artifact@v6
+        with:
+          name: godot-kyber-linux-x86_64
+          path: target/packages/*linux*.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: linux-test-results
+          path: |
+            target/test-results/*.xml
+            target/test-results/**/*.json
+            target/test-results/**/*.log
+            target/ci/linux-tests.log
+            target/video-processes/*/*.json
+            target/video-processes/*/*.log
+            target/rpc-processes/*/*.json
+            target/rpc-processes/*/*.log
+          if-no-files-found: warn
+          retention-days: 14
+
+  macos:
+    name: macOS build and Godot tests
+    env:
+      CARGO_PROFILE_DEV_DEBUG: 0
+      CARGO_PROFILE_TEST_DEBUG: 0
+      CARGO_INCREMENTAL: 0
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: macos-release-godot-tests
+      - name: Install build and test dependencies
+        run: brew install ffmpeg
+      - name: Install Godot
+        run: |
+          python3 scripts/install_godot.py --platform macos --version "$GODOT_VERSION" --destination "$RUNNER_TEMP/godot"
+          echo "GODOT=$RUNNER_TEMP/godot/Godot.app/Contents/MacOS/Godot" >> "$GITHUB_ENV"
+      - name: Build and test
+        run: |
+          mkdir -p target/ci
+          set -o pipefail
+          bash scripts/test_macos.sh 2>&1 | tee target/ci/macos-tests.log
+      - name: Package tested addon
+        run: python3 scripts/package_macos.py
+      - uses: actions/upload-artifact@v6
+        with:
+          name: godot-kyber-macos-arm64
+          path: target/packages/*macos*.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: macos-test-results
+          path: |
+            target/test-results/*.xml
+            target/test-results/**/*.json
+            target/test-results/**/*.log
+            target/ci/macos-tests.log
+            target/video-processes/*/*.json
+            target/video-processes/*/*.log
+            target/rpc-processes/*/*.json
+            target/rpc-processes/*/*.log
+          if-no-files-found: warn
+          retention-days: 14
