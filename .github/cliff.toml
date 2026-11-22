@@ -14,7 +14,25 @@ body = """
 
 {% endfor %}
 """
-footer = ""
+footer = """
+
+## License: source code and binaries
+
+- **Original source code:** MIT. Third-party source files retain their own licenses.
+- **Downloaded binaries:** Both the addon-only and demo packages include the Kyber SDK.
+  The combined public binaries are distributed under **AGPL-3.0-or-later**, not MIT alone.
+- **Commercial alternative:** The included Kyber components may instead be used under
+  a valid **Kyber SAS commercial license** covering the versions, modifications,
+  use, and distribution involved. This download does not grant commercial rights.
+
+Under the AGPL option, distributors must provide the complete Corresponding Source,
+including the matching SDK sources, modifications, and build scripts.
+Other dependencies retain their own terms under either option.
+
+Read the `BINARY_LICENSE.md` included in the package and its `licenses/` notices.
+See also [binary licensing](https://github.com/shiena/godot-kyber/blob/main/BINARY_LICENSE.md)
+and [Kyber commercial licensing](https://kyber.tech/).
+"""
 trim = true
 
 [git]
