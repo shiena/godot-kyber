@@ -1,0 +1,39 @@
+# SPDX-FileCopyrightText: 2026 KOGA Mitsuhiro
+# SPDX-License-Identifier: MIT
+
+# Keep plain English commits as well as Conventional Commits.
+[changelog]
+header = ""
+body = """
+{% for group, commits in commits | group_by(attribute="group") %}
+## {{ group | striptags | trim | upper_first }}
+{% for commit in commits %}
+- {% if commit.scope %}**{{ commit.scope }}:** {% endif %}\
+{{ commit.message | split(pat="\n") | first | trim }}\
+{% endfor %}
+
+{% endfor %}
+"""
+footer = ""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+split_commits = false
+commit_parsers = [
+    { message = '^chore\(release\)', skip = true },
+    { message = '^Initialize reository$', skip = true },
+    { message = '(?i)^(fix|repair)\b', group = "<!-- 1 -->Bug fixes" },
+    { message = '(?i)^(perf|optimize)\b', group = "<!-- 2 -->Performance" },
+    { message = '(?i)^(refactor)\b', group = "<!-- 3 -->Refactoring" },
+    { message = '(?i)^(docs?|document)\b', group = "<!-- 4 -->Documentation" },
+    { message = '(?i)^(test|add integration and platform tests)\b', group = "<!-- 5 -->Testing" },
+    { message = '(?i)^(ci|add ci and release workflows)\b', group = "<!-- 6 -->CI/CD" },
+    { message = '(?i)^(feat|add|implement)\b', group = "<!-- 0 -->Features" },
+    { message = '.*', group = "<!-- 7 -->Other changes" },
+]
+filter_commits = false
+tag_pattern = "v[0-9].*"
+topo_order = false
+sort_commits = "oldest"
