@@ -1,0 +1,29 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://file_video.gd" id="1"]
+[ext_resource type="PackedScene" path="res://main.tscn" id="2"]
+[ext_resource type="Script" path="res://multiplayer_demo.gd" id="3"]
+
+[ext_resource type="Script" path="res://viewport_video.gd" id="4"]
+
+[node name="KyberDemo" type="TabContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Video file streaming" type="Control" parent="."]
+layout_mode = 2
+script = ExtResource("1")
+
+[node name="Kyber host receiver" parent="." instance=ExtResource("2")]
+layout_mode = 2
+
+[node name="Godot RPC" type="Control" parent="."]
+layout_mode = 2
+script = ExtResource("3")
+
+[node name="Viewport streaming" type="Control" parent="."]
+layout_mode = 2
+script = ExtResource("4")

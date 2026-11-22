@@ -1,0 +1,8 @@
+<!-- SPDX-FileCopyrightText: 2026 KOGA Mitsuhiro -->
+<!-- SPDX-License-Identifier: MIT -->
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 256 256">
+  <rect width="256" height="256" fill="#122238"/>
+  <path d="M65 58V198M182 58L113 128L182 198" fill="none" stroke="#eef6ff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="65" cy="128" r="18" fill="#45d6a8"/>
+</svg>

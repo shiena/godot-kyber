@@ -1,0 +1,51 @@
+# SPDX-FileCopyrightText: 2026 KOGA Mitsuhiro
+# SPDX-License-Identifier: MIT
+
+[package]
+name = "godot-kyber"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+license = "MIT"
+description = "Godot GDExtension for Kyber video reception and remote input"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+kyber-media = { path = "media" }
+# RawPtr for AudioStreamPlaybackResampled is not re-exported by godot 0.5.5.
+godot-core = "=0.5.5"
+# VideoStreamPlayer queries playback state from Godot's audio thread.
+godot = { version = "=0.5.5", features = ["api-4-2", "experimental-threads"] }
+kyclient = { path = ".deps/kysdk/kyctl/kyclient", features = ["capi", "kymux"], optional = true }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+kyproto = { path = ".deps/kysdk/kymux/kyproto" }
+kynet = { path = ".deps/kysdk/kymux/kynet", features = ["kynet-quinn"] }
+kymux-types = { path = ".deps/kysdk/kymux/kymux-types" }
+tokio = { version = "1", features = ["rt", "net", "process", "io-util", "sync", "time", "macros"] }
+image = { version = "0.25", default-features = false, features = ["jpeg"] }
+rcgen = "0.14"
+sha2 = "0.10"
+hex = "0.4"
+quinn = "0.11"
+rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
+kymux-util = { path = ".deps/kysdk/kymux/kymux-util", features = ["cert"] }
+opus = "0.3"
+audiopus_sys = { version = "0.2", features = ["static"] }
+kyaudioreg = { version = "0.1.0", path = ".deps/kysdk/kymedia/kyaudioreg" }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+
+[features]
+default = ["native-sdk"]
+native-sdk = ["dep:kyclient"]
+# Test doubles are never included in release packages.
+mock-sdk = []
+
+[dev-dependencies]
+kynput = { path = ".deps/kysdk/kynput/kynput", default-features = false, features = ["capi"] }
+kynput-rs = { path = ".deps/kysdk/kynput/kynput-rs" }

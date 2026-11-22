@@ -1,0 +1,29 @@
+# SPDX-FileCopyrightText: 2026 KOGA Mitsuhiro
+# SPDX-License-Identifier: MIT
+
+# Resolve SDK crates from the pinned checkout prepared by scripts/prepare_sdk.py.
+
+[patch.crates-io]
+log4ky              = { path = ".deps/kysdk/kyutil/log4ky" }
+kycom               = { path = ".deps/kysdk/kymux/kycom" }
+kymux               = { path = ".deps/kysdk/kymux/kymux" }
+kyaudioreg          = { path = ".deps/kysdk/kymedia/kyaudioreg" }
+kynput              = { path = ".deps/kysdk/kynput/kynput" }
+kynput-rs           = { path = ".deps/kysdk/kynput/kynput-rs" }
+kynput-sys          = { path = ".deps/kysdk/kynput/kynput-rs/kynput-sys" }
+
+vigem-client = { path = ".deps/kysdk/kynput/external/vigem-client" }
+
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[target.aarch64-linux-android]
+rustflags = ["-C", "link-arg=-Wl,-z,max-page-size=16384"]
+
+# Rust 1.96's Mach-O stripping can misalign LINKEDIT on macOS 27.
+# https://github.com/rust-lang/rust/issues/157750
+[target.'cfg(any(target_os = "macos", target_os = "ios"))']
+rustflags = ["-C", "strip=none"]
+
+[env]
+CMAKE_POLICY_VERSION_MINIMUM = '3.5'

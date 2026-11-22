@@ -1,0 +1,56 @@
+# SPDX-FileCopyrightText: 2026 KOGA Mitsuhiro
+# SPDX-License-Identifier: MIT
+
+version = 1
+
+# Generated metadata, Godot resources, and synthetic binary fixtures cannot
+# reliably retain leading comments. Third-party GUT files retain their own notices.
+[[annotations]]
+path = [
+    "Cargo.lock",
+    "demo/.gutconfig.json",
+    "demo/addons/kyber/bin/.gitkeep",
+    "demo/addons/kyber/input_relay.gd.uid",
+    "demo/addons/kyber/kyber.gdextension",
+    "demo/addons/kyber/kyber.gdextension.uid",
+    "demo/demo.tscn",
+    "demo/export_presets.cfg",
+    "demo/file_video.gd.uid",
+    "demo/icon.svg.import",
+    "demo/main.gd.uid",
+    "demo/main.tscn",
+    "demo/multiplayer_demo.gd.uid",
+    "demo/project.godot",
+    "demo/spatial_screen.gd.uid",
+    "demo/tests/fixtures/rpc_node.gd.uid",
+    "demo/tests/integration/test_audio_stream.gd.uid",
+    "demo/tests/integration/test_demo_scene.gd.uid",
+    "demo/tests/integration/test_extended_input.gd.uid",
+    "demo/tests/integration/test_file_video.gd.uid",
+    "demo/tests/integration/test_host_audio.gd.uid",
+    "demo/tests/integration/test_multiplayer_peer.gd.uid",
+    "demo/tests/integration/test_native_bridge.gd.uid",
+    "demo/tests/integration/test_session.gd.uid",
+    "demo/tests/integration/test_video_stream.gd.uid",
+    "demo/tests/multiplayer_peer.gd.uid",
+    "demo/tests/process/audio_video.gd.uid",
+    "demo/tests/process/gpu_video.gd.uid",
+    "demo/tests/process/live_audio.gd.uid",
+    "demo/tests/process/manual_network.gd.uid",
+    "demo/tests/process/multi_video.gd.uid",
+    "demo/tests/process/native_sdk.gd.uid",
+    "demo/tests/process/visual_video.gd.uid",
+    "demo/tests/test_runner.gd.uid",
+    "demo/tests/test_runner.tscn",
+    "demo/tests/unit/test_client.gd.uid",
+    "demo/tests/video_peer.gd.uid",
+    "demo/viewport_video.gd.uid",
+    "tests/media/colors.h264",
+    "tests/media/colors.mp4",
+    "tests/media/resized.h264",
+    "tests/media/surface.mp4",
+    "tests/media/tone.wav",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 KOGA Mitsuhiro"
+SPDX-License-Identifier = "MIT"

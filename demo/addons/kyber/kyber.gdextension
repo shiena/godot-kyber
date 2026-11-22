@@ -1,0 +1,22 @@
+; SPDX-FileCopyrightText: 2026 KOGA Mitsuhiro
+; SPDX-License-Identifier: MIT
+
+[configuration]
+entry_symbol = "gdext_rust_init"
+compatibility_minimum = "4.2"
+reloadable = false
+
+[libraries]
+ios.debug.arm64 = "res://addons/kyber/bin/ios/GodotKyber.framework"
+ios.release.arm64 = "res://addons/kyber/bin/ios/GodotKyber.framework"
+android.debug.arm64 = "res://addons/kyber/bin/android/libgodot_kyber.so"
+android.release.arm64 = "res://addons/kyber/bin/android/libgodot_kyber.so"
+windows.debug.x86_64 = "res://addons/kyber/bin/godot_kyber.dll"
+windows.release.x86_64 = "res://addons/kyber/bin/godot_kyber.dll"
+linux.debug.x86_64 = "res://addons/kyber/bin/libgodot_kyber.so"
+linux.release.x86_64 = "res://addons/kyber/bin/libgodot_kyber.so"
+macos.debug = "res://addons/kyber/bin/libgodot_kyber.dylib"
+macos.release = "res://addons/kyber/bin/libgodot_kyber.dylib"
+
+[dependencies]
+windows.x86_64 = { "res://addons/kyber/licenses": "" }

@@ -1,0 +1,17 @@
+# SPDX-FileCopyrightText: 2026 KOGA Mitsuhiro
+# SPDX-License-Identifier: MIT
+
+[package]
+name = "kyber-media"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[build-dependencies]
+cc = "1"
+pkg-config = "0.3"
+
+[workspace]
+
+[dev-dependencies]
+libc = "0.2"

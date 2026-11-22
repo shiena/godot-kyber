@@ -1,0 +1,5 @@
+# SPDX-FileCopyrightText: 2026 KOGA Mitsuhiro
+# SPDX-License-Identifier: MIT
+
+*.sh text eol=lf
+*.py text eol=lf
