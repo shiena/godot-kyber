@@ -1,0 +1,57 @@
+# SPDX-FileCopyrightText: 2026 KOGA Mitsuhiro
+# SPDX-License-Identifier: MIT
+
+# Rust
+/target/
+# Cargo.lock is committed. This crate produces a final artifact, the GDExtension
+# shared library, so a pinned lockfile makes CI and releases reproducible.
+
+# Godot
+/.godot/*
+# Without this, running from the CLI without opening the editor loads no extension.
+!/.godot/extension_list.cfg
+*.import
+# The audio self check needs these files as they are, not as AudioStreams.
+!/demo/web/media/*.import
+
+# Build output, placed by scripts/build.ps1 and build.sh.
+/addons/godot_servo/bin/
+
+# Local working files
+*.log
+# git-cliff writes this during a release; the notes live on the release itself.
+/CHANGELOG.md
+# Local settings written by Godot version managers
+.godotrc
+/httpd.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# additional ignores
+/.deps/
+/.tools/
+**/.godot/
+/demo/addons/kyber/bin/*
+!/demo/addons/kyber/bin/.gitkeep
+__pycache__/
+*.pyc
+/demo/tests/fixtures/*.dll
+/demo/tests/fixtures/*.pdb
+/demo/tests/fixtures/*.lib
+/demo/tests/fixtures/*.exp
+/demo/tests/fixtures/*.mp4
+/demo/addons/kyber/licenses/
+/demo/addons/kyber/runtime-manifest.json
+/demo/addons/kyber/BINARY_LICENSE.md
+
+/media/target/
+/media/Cargo.lock
+
+AGENTS.md
