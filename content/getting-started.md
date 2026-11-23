@@ -9,7 +9,7 @@ Send a video between two Godot instances using the included demo. Start on one c
 
 Open [GitHub Releases](https://github.com/shiena/godot-kyber/releases/latest) and download the **demo** ZIP. Extract it, then open `project.godot` in Godot **4.7.2** (the version used to test the full demo).
 
-The extension targets Godot 4.2. The full demo and test suite use Godot 4.7.2. Mobile projects also need platform export tools and signing.
+The addon supports Godot 4.2 and later 4.x releases. The full demo and test suite use Godot 4.7.2. Mobile projects also need platform export tools and signing.
 
 ## Connect two instances
 
@@ -21,6 +21,10 @@ The extension targets Godot 4.2. The full demo and test suite use Godot 4.7.2. M
 6. Stop the session when you finish.
 
 For a LAN connection, listen on `0.0.0.0` and use the sender's LAN address on the receiver. Allow the selected UDP port through the firewall. A new sending session generates a new connection code.
+
+<!-- capture: file-sender | Sender preview with the connection code hidden -->
+
+<!-- capture: file-receiver | Received video and frame statistics -->
 
 ## Install in your own project
 

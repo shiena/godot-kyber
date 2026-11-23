@@ -228,3 +228,11 @@ html[lang=ja] .prose pre code { font-size: 14px; }
 .guide-directory p { margin: 8px 0 0; color: var(--muted); }
 .related-guides a { display: block; margin: 12px 0; }
 .demo-video-player { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 10px; }
+.screenshot-placeholder { margin: 28px 0; border: 1px dashed var(--border); border-radius: 6px; overflow: hidden; }
+.screenshot-placeholder>div { min-height: 180px; display: grid; place-items: center; padding: 24px; background: var(--panel); color: var(--muted); text-align: center; }
+.screenshot-placeholder figcaption { padding: 14px 18px; font-size: 14px; line-height: 1.8; }
+html[lang=ja] .screenshot-placeholder figcaption { font-size: 16px; }
+.doc-screenshot { margin: 28px 0; }
+.doc-screenshot img { display: block; width: 100%; height: auto; border: 1px solid var(--border); border-radius: 6px; }
+.doc-screenshot figcaption { margin-top: 10px; color: var(--muted); font-size: 14px; line-height: 1.8; }
+html[lang=ja] .doc-screenshot figcaption { font-size: 16px; }

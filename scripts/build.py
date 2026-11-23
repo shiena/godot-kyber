@@ -3,11 +3,13 @@
 """Build the standalone Pages site using documentation from the addon branch."""
 import argparse
 import html
+import hashlib
 import json
 import pathlib
 import posixpath
 import re
 import shutil
+import struct
 import subprocess
 from urllib.parse import quote, unquote, urlsplit
 
@@ -17,17 +19,20 @@ from markdown.extensions.toc import slugify_unicode
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 REPO = 'https://github.com/shiena/godot-kyber'
 GUIDES = [
+    ('installation', 'Install the addon', 'インストール', None),
     ('getting-started', 'Get started', 'はじめての送受信', None),
     ('overview', 'Features & platforms', '対応機能・プラットフォーム', 'overview'),
     ('video', 'Video & shared sessions', '映像・セッション管理', 'video'),
     ('audio', 'Audio & microphones', '音声・マイク', 'audio'),
     ('extensions', 'Capture, input & clipboard', 'キャプチャー・入力・クリップボード', 'extensions'),
     ('multiplayer', 'Multiplayer RPC', 'マルチプレイヤーRPC', 'multiplayer'),
+    ('connections', 'Connections & sessions', '接続とセッション管理', None),
     ('host', 'Existing Kyber hosts', '既存Kyberホストへの接続', 'host'),
     ('h264', 'H.264 & GPU acceleration', 'H.264・GPU処理', 'h264'),
+    ('troubleshooting', 'Troubleshooting', 'トラブルシューティング', None),
     ('development', 'Build, test & distribute', 'ビルド・テスト・配布', 'development'),
-    ('sdk', 'SDK internals (Japanese)', 'SDK統合仕様', 'sdk'),
-    ('license', 'Licensing', 'ライセンス（英語）', 'BINARY_LICENSE'),
+    ('sdk', 'SDK internals', 'SDK統合仕様', 'sdk'),
+    ('license', 'Licensing', 'ライセンス', None),
 ]
 
 
@@ -55,7 +60,11 @@ def main():
         return url('guide/' + slug + '/', lang)
 
     def asset(path):
-        return base + 'assets/' + path
+        version = ''
+        if path in ('site.css', 'site.js', 'demo.webm'):
+            digest = hashlib.sha256((ROOT / 'assets' / path).read_bytes()).hexdigest()[:12]
+            version = '?v=' + digest
+        return base + 'assets/' + path + version
 
     def save(path, text):
         dest = out / path
@@ -70,6 +79,8 @@ def main():
     if demo_video.is_file():
         shutil.copy2(demo_video, assets / 'demo.webm')
     (assets / 'icon.svg').write_bytes(source('demo/addons/kyber/icon.svg'))
+    if (ROOT / 'assets/screenshots').is_dir():
+        shutil.copytree(ROOT / 'assets/screenshots', assets / 'screenshots', dirs_exist_ok=True)
     for name in ('CC-BY-4.0.txt', 'LicenseRef-Kyber-Logo.txt', 'MIT.txt', 'AGPL-3.0-or-later.txt'):
         dest = out / 'LICENSES' / name
         dest.parent.mkdir(exist_ok=True)
@@ -80,9 +91,9 @@ def main():
         return labels[slug][lang == 'ja']
 
     def navigation(lang, current):
-        groups = [('Start here', 'はじめに', ['getting-started', 'overview']),
+        groups = [('Start here', 'はじめに', ['installation', 'getting-started', 'overview']),
                   ('Guides', '使い方', ['video', 'audio', 'extensions', 'multiplayer']),
-                  ('Connections & tuning', '接続・設定', ['host', 'h264']),
+                  ('Connections & tuning', '接続・設定', ['connections', 'host', 'h264', 'troubleshooting']),
                   ('Development', '開発・配布', ['development', 'sdk', 'license'])]
         result = f'<a class="guide-index-link" href="{url("guide/", lang)}">{"ユーザーガイド" if lang == "ja" else "User guide"}</a>'
         for en, ja, slugs in groups:
@@ -167,11 +178,12 @@ stream.set_session(session)
     for lang in ('en', 'ja'):
         for slug, en, ja, stem in GUIDES:
             if stem is None:
-                path = 'content/getting-started' + ('_ja' if lang == 'ja' else '') + '.md'
+                path = 'content/' + slug + ('_ja' if lang == 'ja' else '') + '.md'
                 text = (ROOT / path).read_text(encoding='utf-8-sig').replace('KyberViewportSender', 'KyberFileVideo.start_viewport_sender()')
             else:
-                path = 'BINARY_LICENSE.md' if stem == 'BINARY_LICENSE' else 'docs/' + stem + ('_ja' if lang == 'ja' and stem != 'sdk' else '') + '.md'
-                text = source(path).decode('utf-8-sig')
+                path = 'BINARY_LICENSE.md' if stem == 'BINARY_LICENSE' else 'docs/' + stem + ('_ja' if lang == 'ja' else '') + '.md'
+                override = ROOT / 'content' / pathlib.PurePosixPath(path).name
+                text = override.read_text(encoding='utf-8-sig') if override.is_file() else source(path).decode('utf-8-sig')
             paths.setdefault(path, guide(slug, lang))
             pages.append((lang, slug, path, text))
         paths['docs/README' + ('_ja' if lang == 'ja' else '') + '.md'] = guide('getting-started', lang)
@@ -183,6 +195,22 @@ stream.set_session(session)
         text = re.sub(r'^\[(Documentation|ドキュメント|Project overview|プロジェクト概要|ドキュメント一覧).*$', '', text, flags=re.M)
         md = markdown.Markdown(extensions=['extra', 'toc', 'sane_lists'], extension_configs={'toc': {'slugify': slugify_unicode, 'toc_depth': '2-3'}})
         rendered = md.convert(text)
+        def screenshot(match):
+            caption = html.escape(match[1])
+            pending = 'スクリーンショット掲載予定' if lang == 'ja' else 'Screenshot placeholder'
+            return f'<figure class="screenshot-placeholder"><div>{pending}</div><figcaption>{caption}</figcaption></figure>'
+        rendered = re.sub(r'<!-- screenshot: (.*?) -->', screenshot, rendered)
+        def capture(match):
+            name, caption = match[1], html.escape(match[2])
+            image_url = asset('screenshots/' + name + '.png')
+            image_path = ROOT / 'assets/screenshots' / (name + '.png')
+            with image_path.open('rb') as image_file:
+                header = image_file.read(24)
+            if header[:8] != b'\x89PNG\r\n\x1a\n' or header[12:16] != b'IHDR':
+                raise ValueError(f'Invalid PNG header: {image_path}')
+            width, height = struct.unpack('>II', header[16:24])
+            return f'<figure class="doc-screenshot"><a href="{image_url}"><img src="{image_url}" width="{width}" height="{height}" style="display:block;width:100%;height:auto;aspect-ratio:{width}/{height};object-fit:contain" loading="lazy" alt="{caption}"></a><figcaption>{caption}</figcaption></figure>'
+        rendered = re.sub(r'<!-- capture: ([a-z0-9-]+) \| (.*?) -->', capture, rendered)
         def rewrite(match):
             target = html.unescape(match[1])
             parsed = urlsplit(target)
@@ -192,6 +220,10 @@ stream.set_session(session)
             if path.startswith('content/') and resolved.startswith('../'):
                 resolved = resolved[3:]
             destination = paths.get(resolved)
+            if resolved == 'BINARY_LICENSE.md':
+                destination = guide('license', lang)
+            elif resolved == 'docs/sdk.md':
+                destination = guide('sdk', lang)
             if destination is None:
                 destination = REPO + '/blob/' + ref + '/' + quote(resolved)
             return 'href="' + html.escape(destination + ('#' + parsed.fragment if parsed.fragment else '')) + '"'
@@ -201,10 +233,11 @@ stream.set_session(session)
         related = ''.join(f'<a href="{guide(item, lang)}">{label(item, lang)}</a>' for item in guide_info[slug]['related'])
         rendered += f'<nav class="related-guides" aria-label="{"関連ガイド" if lang == "ja" else "Related guides"}"><h2>{"関連ガイド" if lang == "ja" else "Related guides"}</h2>{related}</nav>'
         title = label(slug, lang)
-        banner = '<div class="doc-language-note">This reference is currently available in Japanese.</div>' if slug == 'sdk' and lang == 'en' else ''
-        if slug == 'license' and lang == 'ja':
-            banner = '<div class="doc-language-note">このリポジトリのソースコードはMITライセンスです。配布バイナリにはKyber SDKが含まれるため、AGPLの条件が適用されます。対象の商用契約を適用できる場合があります。以下は英語の正式な案内です。</div>'
+        banner = ''
         source_url = REPO + '/blob/' + ref + '/' + path if not path.startswith('content/') else REPO + '/blob/gh-pages/' + path
+        override = ROOT / 'content' / pathlib.PurePosixPath(path).name
+        if override.is_file():
+            source_url = REPO + '/blob/gh-pages/content/' + override.name
         body = f'<div class="doc-breadcrumb">DOCS <span>/</span> {title}</div><article class="prose">{banner}{rendered}</article><div class="doc-bottom"><a href="{source_url}">{"ソースを見る" if lang == "ja" else "View page source"} ↗</a><a href="{REPO}/issues">{"問題を報告" if lang == "ja" else "Report an issue"} ↗</a></div>'
         relative = ('ja/' if lang == 'ja' else '') + 'guide/' + slug + '/index.html'
         save(relative, shell(lang, title, body, slug, md.toc))
@@ -221,7 +254,7 @@ stream.set_session(session)
         save(('ja/' if lang == 'ja' else '') + 'guide/index.html', directory)
         landing = home(lang)
         if demo_video.is_file():
-            video = f'<video class="demo-video-player" controls muted playsinline preload="metadata" aria-label="{"映像・音声の送受信デモ" if lang == "ja" else "Video and audio streaming demo"}"><source src="{asset("demo.webm")}" type="video/webm"><a href="{asset("demo.webm")}">{"動画をダウンロード" if lang == "ja" else "Download the video"}</a></video>'
+            video = f'<video class="demo-video-player" controls loop playsinline preload="metadata" aria-label="{"映像・音声の送受信デモ" if lang == "ja" else "Video and audio streaming demo"}"><source src="{asset("demo.webm")}" type="video/webm"><a href="{asset("demo.webm")}">{"動画をダウンロード" if lang == "ja" else "Download the video"}</a></video>'
             landing = re.sub(r'<div class="demo-video-placeholder".*?</div></div>\s*(?=<figcaption)', video, landing, flags=re.S)
         save(('ja/' if lang == 'ja' else '') + 'index.html', shell(lang, 'Godot × Kyber', landing))
         credits = f'''<article class="prose credits"><h1>{'クレジット' if lang == 'ja' else 'Credits'}</h1><p>Original site design and code: KOGA Mitsuhiro, MIT.</p><p>Godot Engine icon: © 2017 Andrea Calabró, <a href="{base}LICENSES/CC-BY-4.0.txt">CC BY 4.0</a>. The icon is scaled and overlaid on the Kyber icon. Kyber mark: Kyber SAS, <a href="{base}LICENSES/LicenseRef-Kyber-Logo.txt">rights notice</a>. This is an unofficial integration, not an endorsement by either project.</p><p>Built with Python-Markdown (BSD). Documentation and addon artwork are taken from <a href="{REPO}/tree/{ref}">addon revision {ref[:7]}</a>.</p><a href="{url(lang=lang)}">← {'ホームへ' if lang == 'ja' else 'Back to home'}</a></article>'''

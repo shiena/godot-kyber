@@ -54,13 +54,13 @@ def main():
                 errors.append(f'{path.relative_to(root)}: missing anchor: {link}')
     index = json.loads((root / 'assets/search.json').read_text(encoding='utf-8'))
     for language in ('en', 'ja'):
-        assert len(index[language]) == 11
+        assert len(index[language]) == info['pages'] // 2
         for item in index[language]:
             assert item['title'] and item['text']
             assert (root / item['url'][len(base):] / 'index.html').is_file()
     if errors:
         raise SystemExit('\n'.join(errors))
-    print(f'Checked {len(pages)} pages, all internal links and anchors, and 22 search entries ({base})')
+    print(f'Checked {len(pages)} pages, all internal links and anchors, and {info["pages"]} search entries ({base})')
 
 if __name__ == '__main__':
     main()
