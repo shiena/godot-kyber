@@ -36,13 +36,20 @@ try {
     $ffmpeg = if ($env:FFMPEG) { $env:FFMPEG } else { 'ffmpeg' }
     & $ffmpeg -hide_banner -loglevel error -y -f lavfi -i 'color=c=red:s=640x360:r=24' -t 1.5 -an -c:v libx264 -pix_fmt yuv420p 'demo/tests/fixtures/video sample.mp4'
     if ($LASTEXITCODE -ne 0) { throw 'FFmpeg video fixture generation failed' }
-    if (-not (Test-Path demo/.godot/extension_list.cfg)) {
-        # Godot 4.7.2 needs editor frames after first-time extension discovery.
-        & $Godot --headless --path demo --editor --quit-after 60
-        if ($LASTEXITCODE -ne 0) { throw 'Initial extension registration failed' }
+    # Register before startup so a clean import can resolve extension classes.
+    # Preserve other registrations when testing an existing editor project.
+    New-Item -ItemType Directory -Force demo/.godot | Out-Null
+    $extensionList = 'demo/.godot/extension_list.cfg'
+    $extension = 'res://addons/kyber/kyber.gdextension'
+    if (-not (Test-Path $extensionList) -or $extension -notin @(Get-Content $extensionList)) {
+        Add-Content -LiteralPath $extensionList -Value $extension -Encoding utf8
     }
-    & $Godot --headless --path demo --editor --import --quit
-    if ($LASTEXITCODE -ne 0) { throw 'Godot import failed' }
+    $importLog = Join-Path $projectRoot 'target/test-results/godot-import.log'
+    New-Item -ItemType Directory -Force (Split-Path $importLog -Parent) | Out-Null
+    & $Godot --headless --path demo --editor --import --quit *> $importLog
+    $importExitCode = $LASTEXITCODE
+    Get-Content -LiteralPath $importLog
+    if ($importExitCode -ne 0) { throw "Godot import failed with exit code $importExitCode`: $importLog" }
     if ($PrepareOnly) {
         Write-Host 'Ready: open demo/project.godot and run tests/test_runner.tscn with F6.'
         return
