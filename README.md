@@ -59,7 +59,9 @@ node --check assets/site.js
 
 This branch contains source rather than generated HTML. Deployment should
 build `dist/` and upload it through GitHub Pages Actions. Do not select legacy
-branch publishing for the source directory. Deployment is not configured yet.
+branch publishing for the source directory. The `Deploy documentation` workflow builds and validates the site on each
+push to `gh-pages`, then publishes `dist/` through GitHub Pages Actions.
+It fetches `origin/main` for the addon sources recorded in `build-info.json`.
 Generated output and local preview files are ignored.
 
 ## Demo video
