@@ -20,7 +20,7 @@ class Page(HTMLParser):
             self.ids.add(attrs['id'])
         if tag in ('a', 'link') and 'href' in attrs:
             self.links.append(attrs['href'])
-        if tag in ('script', 'img') and 'src' in attrs:
+        if tag in ('script', 'img', 'source', 'video') and 'src' in attrs:
             self.links.append(attrs['src'])
 
 

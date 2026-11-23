@@ -25,6 +25,7 @@ English or `http://127.0.0.1:8765/ja/` for Japanese.
 
 - `scripts/build.py`: shared layout, landing pages, sidebar, and source mapping.
 - `content/`: introduction pages in English and Japanese.
+- `content/guides.json`: bilingual guide summaries and related-page links.
 - `assets/`: styles and browser interactions.
 - `main:docs/`: existing guides, imported with internal links rewritten.
 - `main:demo/addons/kyber/icon.svg`: the addon icon, imported with its notices.
@@ -53,6 +54,14 @@ This branch contains source rather than generated HTML. Deployment should
 build `dist/` and upload it through GitHub Pages Actions. Do not select legacy
 branch publishing for the source directory. Deployment is not configured yet.
 Generated output and local preview files are ignored.
+
+## Demo video
+
+Place the composite recording at `assets/demo.webm` and rebuild. Both home
+pages replace the placeholder with a video player. Playback starts muted,
+with native controls and inline mobile playback. Autoplay is disabled.
+The player reserves a 16:9 area; export the recording at that aspect ratio.
+Without this file, the build keeps the labeled placeholder.
 
 Original site code is MIT-licensed. The addon icon retains the third-party
 notices imported from `main` and displayed on the Credits page.

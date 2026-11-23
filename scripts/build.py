@@ -37,6 +37,7 @@ def main():
     parser.add_argument('--base-path', default='/godot-kyber/')
     parser.add_argument('--output', type=pathlib.Path, default=ROOT / 'dist')
     args = parser.parse_args()
+    guide_info = json.loads((ROOT / 'content/guides.json').read_text(encoding='utf-8'))
     ref = subprocess.check_output(['git', 'rev-parse', '--verify', args.source_ref + '^{commit}'], cwd=ROOT, text=True).strip()
     base = '/' + args.base_path.strip('/') + '/' if args.base_path.strip('/') else '/'
     out = args.output.resolve()
@@ -65,6 +66,9 @@ def main():
     assets.mkdir(exist_ok=True)
     for name in ('site.css', 'site.js'):
         shutil.copy2(ROOT / 'assets' / name, assets / name)
+    demo_video = ROOT / 'assets/demo.webm'
+    if demo_video.is_file():
+        shutil.copy2(demo_video, assets / 'demo.webm')
     (assets / 'icon.svg').write_bytes(source('demo/addons/kyber/icon.svg'))
     for name in ('CC-BY-4.0.txt', 'LicenseRef-Kyber-Logo.txt', 'MIT.txt', 'AGPL-3.0-or-later.txt'):
         dest = out / 'LICENSES' / name
@@ -80,7 +84,7 @@ def main():
                   ('Guides', '使い方', ['video', 'audio', 'extensions', 'multiplayer']),
                   ('Connections & tuning', '接続・設定', ['host', 'h264']),
                   ('Development', '開発・配布', ['development', 'sdk', 'license'])]
-        result = ''
+        result = f'<a class="guide-index-link" href="{url("guide/", lang)}">{"ユーザーガイド" if lang == "ja" else "User guide"}</a>'
         for en, ja, slugs in groups:
             result += f'<section><h2>{ja if lang == "ja" else en}</h2>'
             for slug in slugs:
@@ -108,7 +112,7 @@ def main():
 <a class="skip-link" href="#main">{'本文へ移動' if ja else 'Skip to content'}</a>
 <header class="header"><div class="header-inner">
 <a class="brand" href="{url(lang=lang)}"><img src="{asset('icon.svg')}" width="34" height="34" alt=""><span>godot<span class="brand-separator">-</span>kyber</span></a>
-<span class="header-divider"></span><a class="docs-link" href="{guide('getting-started', lang)}">{'ドキュメント' if ja else 'Documentation'}</a>
+<span class="header-divider"></span><a class="docs-link" href="{url('guide/', lang)}">{'ドキュメント' if ja else 'Documentation'}</a>
 <div class="header-actions"><button class="search-open" aria-label="{search}"><span>⌕</span><span class="search-label">{'検索' if ja else 'Search docs'}</span><kbd>/</kbd></button>
 <a class="language" href="{switch}" lang="{other}" aria-label="{'Switch to English' if ja else '日本語に切り替える'}">{'EN' if ja else '日本語'}</a>
 <button class="theme-toggle" aria-label="{'配色を切り替える' if ja else 'Toggle color theme'}">◐</button>
@@ -192,6 +196,10 @@ stream.set_session(session)
                 destination = REPO + '/blob/' + ref + '/' + quote(resolved)
             return 'href="' + html.escape(destination + ('#' + parsed.fragment if parsed.fragment else '')) + '"'
         rendered = re.sub(r'href="([^"]*)"', rewrite, rendered)
+        intro = html.escape(guide_info[slug][lang])
+        rendered = re.sub(r'(</h1>)', lambda m: m[1] + f'<p class="guide-summary">{intro}</p>', rendered, count=1)
+        related = ''.join(f'<a href="{guide(item, lang)}">{label(item, lang)}</a>' for item in guide_info[slug]['related'])
+        rendered += f'<nav class="related-guides" aria-label="{"関連ガイド" if lang == "ja" else "Related guides"}"><h2>{"関連ガイド" if lang == "ja" else "Related guides"}</h2>{related}</nav>'
         title = label(slug, lang)
         banner = '<div class="doc-language-note">This reference is currently available in Japanese.</div>' if slug == 'sdk' and lang == 'en' else ''
         if slug == 'license' and lang == 'ja':
@@ -204,7 +212,18 @@ stream.set_session(session)
         search_index[lang].append({'title': title, 'url': guide(slug, lang), 'text': re.sub(r'\s+', ' ', plain)})
 
     for lang in ('en', 'ja'):
-        save(('ja/' if lang == 'ja' else '') + 'index.html', shell(lang, 'Godot × Kyber', home(lang)))
+        title = 'ユーザーガイド' if lang == 'ja' else 'User guide'
+        description = '導入から機能別の使い方、ビルドと配布まで。目的に合うガイドを選んでください。' if lang == 'ja' else 'Find a guide for installation, feature integration, or building and distributing the addon.'
+        entries = ''.join(f'<li><a href="{guide(slug, lang)}">{label(slug, lang)}</a><p>{html.escape(guide_info[slug][lang])}</p></li>' for slug, *_ in GUIDES)
+        body = f'<article class="prose"><h1>{title}</h1><p>{description}</p><ul class="guide-directory">{entries}</ul></article>'
+        directory = shell(lang, title, body, 'index')
+        directory = directory.replace(guide('index', 'ja' if lang == 'en' else 'en'), url('guide/', 'ja' if lang == 'en' else 'en'))
+        save(('ja/' if lang == 'ja' else '') + 'guide/index.html', directory)
+        landing = home(lang)
+        if demo_video.is_file():
+            video = f'<video class="demo-video-player" controls muted playsinline preload="metadata" aria-label="{"映像・音声の送受信デモ" if lang == "ja" else "Video and audio streaming demo"}"><source src="{asset("demo.webm")}" type="video/webm"><a href="{asset("demo.webm")}">{"動画をダウンロード" if lang == "ja" else "Download the video"}</a></video>'
+            landing = re.sub(r'<div class="demo-video-placeholder".*?</div></div>\s*(?=<figcaption)', video, landing, flags=re.S)
+        save(('ja/' if lang == 'ja' else '') + 'index.html', shell(lang, 'Godot × Kyber', landing))
         credits = f'''<article class="prose credits"><h1>{'クレジット' if lang == 'ja' else 'Credits'}</h1><p>Original site design and code: KOGA Mitsuhiro, MIT.</p><p>Godot Engine icon: © 2017 Andrea Calabró, <a href="{base}LICENSES/CC-BY-4.0.txt">CC BY 4.0</a>. The icon is scaled and overlaid on the Kyber icon. Kyber mark: Kyber SAS, <a href="{base}LICENSES/LicenseRef-Kyber-Logo.txt">rights notice</a>. This is an unofficial integration, not an endorsement by either project.</p><p>Built with Python-Markdown (BSD). Documentation and addon artwork are taken from <a href="{REPO}/tree/{ref}">addon revision {ref[:7]}</a>.</p><a href="{url(lang=lang)}">← {'ホームへ' if lang == 'ja' else 'Back to home'}</a></article>'''
         save(('ja/' if lang == 'ja' else '') + 'credits/index.html', shell(lang, 'Credits', credits))
     save('assets/search.json', json.dumps(search_index, ensure_ascii=False))

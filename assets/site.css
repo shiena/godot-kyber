@@ -219,3 +219,12 @@ html[lang=ja] .prose pre code { font-size: 14px; }
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; transition: none !important; }
 }
+/* Guide navigation follows the same reading width as the article. */
+.guide-summary { color: var(--muted); border-left: 3px solid var(--accent); padding-left: 18px; margin-bottom: 32px; }
+.sidebar .guide-index-link { margin-bottom: 24px; color: var(--accent); font-weight: 600; }
+.guide-directory { list-style: none; padding-left: 0 !important; }
+.guide-directory li { border-bottom: 1px solid var(--border); padding: 18px 0; margin: 0; }
+.guide-directory li>a { font-size: 20px; font-weight: 600; }
+.guide-directory p { margin: 8px 0 0; color: var(--muted); }
+.related-guides a { display: block; margin: 12px 0; }
+.demo-video-player { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 10px; }

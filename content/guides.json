@@ -1,0 +1,13 @@
+{
+  "getting-started": {"en": "Install the addon and send your first video between two demo instances.", "ja": "アドオンを導入し、デモを2つ起動して動画を送受信します。", "related": ["overview", "video"]},
+  "overview": {"en": "Check supported features, platform media backends, and integration limits before choosing an API.", "ja": "APIを選ぶ前に、対応機能、各OSのメディア機能、実装上の制限を確認します。", "related": ["getting-started", "h264", "license"]},
+  "video": {"en": "Send video files, receive with VideoStreamPlayer, and manage shared connections with KyberSession.", "ja": "動画ファイルを送信し、VideoStreamPlayerで受信します。KyberSessionで接続を共有し、再接続や入力を管理します。", "related": ["audio", "extensions", "h264"]},
+  "audio": {"en": "Send an audio bus or microphone and play received audio through AudioStreamPlayer. Includes Apple microphone permissions and transport compatibility.", "ja": "音声バスやマイクを送信し、AudioStreamPlayerで再生します。Apple環境のマイク権限と転送方式の互換性も説明します。", "related": ["video", "host", "development"]},
+  "extensions": {"en": "Share a Viewport with multiple receivers, forward input, exchange clipboard text, and inspect performance statistics.", "ja": "Viewportを複数の受信者へ配信します。入力転送、クリップボード交換、性能統計の確認方法も説明します。", "related": ["video", "multiplayer", "h264"]},
+  "multiplayer": {"en": "Use KyberMultiplayerPeer with Godot multiplayer RPCs and try the included RPC demo.", "ja": "KyberMultiplayerPeerをGodotのマルチプレイヤーRPCと組み合わせます。同梱デモの実行方法も説明します。", "related": ["getting-started", "extensions"]},
+  "host": {"en": "Connect to an existing Kyber host using the embedded SDK and configure the receiver from GDScript.", "ja": "組み込みSDKで既存のKyberホストに接続し、GDScriptから受信を設定します。", "related": ["video", "audio", "sdk"]},
+  "h264": {"en": "Choose a codec and acceleration mode, understand GPU transfer limits, and measure the active backend.", "ja": "コーデックと高速化方式を選び、GPU転送の制限と使用中のバックエンドを確認します。", "related": ["video", "overview", "development"]},
+  "development": {"en": "Build and test on desktop and mobile platforms, package releases, and maintain protocol compatibility.", "ja": "デスクトップ・モバイル向けのビルドとテスト、リリースの作成、プロトコル互換性の保守手順を説明します。", "related": ["sdk", "h264", "license"]},
+  "sdk": {"en": "Inspect SDK source pinning, native interfaces, thread ownership, and build-time integration. The detailed reference is in Japanese.", "ja": "SDKのソース固定、ネイティブIF、スレッドと寿命、ビルド時の統合方法を確認します。", "related": ["development", "host"]},
+  "license": {"en": "Understand the different terms for repository source and distributed binaries. The binary licensing notice is provided in English.", "ja": "リポジトリのソースコードと配布バイナリに適用される条件の違いを確認します。バイナリ向けの案内本文は英語です。", "related": ["overview", "development"]}
+}
