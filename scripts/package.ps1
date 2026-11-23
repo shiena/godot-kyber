@@ -45,7 +45,7 @@ try {
             Copy-Item -LiteralPath (Join-Path 'demo/addons/kyber' $entry.Name) -Destination $destination
         }
     }
-    Copy-Item -LiteralPath demo/addons/kyber/kyber.gdextension,demo/addons/kyber/runtime-manifest.json,demo/addons/kyber/input_relay.gd,demo/addons/kyber/input_relay.gd.uid -Destination $addon
+    Copy-Item -LiteralPath demo/addons/kyber/kyber.gdextension,demo/addons/kyber/runtime-manifest.json,demo/addons/kyber/input_relay.gd,demo/addons/kyber/input_relay.gd.uid,demo/addons/kyber/icon.svg -Destination $addon
     Copy-Item -LiteralPath demo/addons/kyber/licenses -Destination $addon -Recurse
     Copy-Item -LiteralPath README.md,README_ja.md,LICENSE,NOTICE.md,REUSE.toml,BINARY_LICENSE.md -Destination $staging
     Copy-Item -LiteralPath LICENSES -Destination $staging -Recurse

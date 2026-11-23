@@ -63,6 +63,21 @@ and does not label the combined library as MIT.
 Official information: https://kyber.tech/ and the SDK's `COPYING.md`.
 The applicable signed agreement determines commercial permissions.
 
+## Addon icon
+
+`demo/addons/kyber/icon.svg` combines the Godot Engine icon and Kyber mark.
+The Godot icon is copyright 2017 Andrea Calabró, licensed under CC BY 4.0:
+https://godotengine.org/press/ and https://godotengine.org/assets/press/icon_color_outline.svg.
+It is scaled proportionally and placed at the lower right of the Kyber gradient icon. The background is
+prerendered at 1024 pixels and embedded as a transparent PNG inside the SVG
+to preserve the original filters in Godot; the foreground remains vector.
+See `LICENSES/CC-BY-4.0.txt`.
+
+The Kyber mark comes from https://gitlab.com/kyber/kyber/-/blob/main/static/img/kyber-icon-gradient.svg and retains its
+owner's rights. Its use here does not grant an MIT license to that mark;
+see `LICENSES/LicenseRef-Kyber-Logo.txt`. The original composition is MIT.
+This is an unofficial integration icon, not an endorsement by either project.
+
 ## Other third-party material
 
 `demo/addons/gut/` is a vendored copy of GUT. Its code retains the MIT license

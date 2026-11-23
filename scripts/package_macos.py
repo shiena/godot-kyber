@@ -26,7 +26,7 @@ if architecture not in ("arm64", "x86_64"):
 destination = root / "target/packages" / f"godot-kyber-{version}-macos-{architecture}.tar.gz"
 destination.parent.mkdir(parents=True, exist_ok=True)
 with tarfile.open(destination, "w:gz") as package:
-    for path in [binary, addon / "kyber.gdextension", addon / "runtime-manifest.json", addon / "licenses", addon / "input_relay.gd", addon / "input_relay.gd.uid"]:
+    for path in [binary, addon / "kyber.gdextension", addon / "runtime-manifest.json", addon / "licenses", addon / "input_relay.gd", addon / "input_relay.gd.uid", addon / "icon.svg"]:
         package.add(path, arcname="godot-kyber/addons/kyber/" + path.relative_to(addon).as_posix())
     for path in [root / "README.md", root / "README_ja.md", root / "LICENSE", root / "LICENSES", root / "NOTICE.md", root / "BINARY_LICENSE.md", root / "REUSE.toml", root / "docs"]:
         package.add(path, arcname="godot-kyber/" + path.relative_to(root).as_posix())

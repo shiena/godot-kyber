@@ -1,0 +1,10 @@
+Kyber logo notice
+
+Source: https://gitlab.com/kyber/kyber/-/blob/main/static/img/kyber-icon-gradient.svg
+Rights holder: Kyber SAS
+
+The Kyber mark is reproduced to identify the Kyber integration. No standalone
+logo license was supplied with the source asset. This notice records its
+provenance and does not grant copyright or trademark permissions, or apply
+the MIT license to the mark. Any separate permissions remain with the rights
+holder. LicenseRef-Kyber-Logo identifies this notice, not an open-source grant.

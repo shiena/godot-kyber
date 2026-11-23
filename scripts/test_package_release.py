@@ -56,6 +56,7 @@ class ReleasePackages(unittest.TestCase):
                                      ("upstream-fixture-" + platform + name).encode())
             for name in ("BINARY_LICENSE.md", "NOTICE.md", "REUSE.toml", "LICENSES/MIT.txt", "LICENSES/AGPL-3.0-or-later.txt"):
                 self.assertIn(prefix + name, demo.namelist())
+            self.assertEqual(addon.read("addons/kyber/icon.svg"), (ROOT / "demo/addons/kyber/icon.svg").read_bytes())
             self.assertIn("addons/kyber/input_relay.gd", addon.namelist())
             self.assertIn("addons/kyber/input_relay.gd.uid", addon.namelist())
             settings = demo.read(prefix + "project.godot").decode()

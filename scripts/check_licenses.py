@@ -26,15 +26,15 @@ def main():
         path = ROOT / name
         if not path.is_file():
             continue
-        expected = "MIT"
+        expected = "MIT AND CC-BY-4.0 AND LicenseRef-Kyber-Logo" if name == "demo/addons/kyber/icon.svg" else "MIT"
         if name in annotations:
             actual = annotations[name]
         else:
             header = "\n".join(path.read_text(encoding="utf-8-sig").splitlines()[:12])
-            match = re.search(r"SPDX-License-Identifier: ([A-Za-z0-9.-]+)", header)
+            match = re.search(r"SPDX-License-Identifier: ([^\r\n]+)", header)
             if not match or "SPDX-FileCopyrightText:" not in header:
                 raise RuntimeError(f"Missing license header or REUSE annotation: {name}")
-            actual = match[1]
+            actual = match[1].split("-->")[0].strip()
         if actual != expected:
             raise RuntimeError(f"Unexpected license for {name}: {actual}")
         checked += 1

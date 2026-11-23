@@ -43,7 +43,7 @@ def main():
     binary, triple, backend, system_libraries = targets[args.platform]
     architecture = "arm64" if triple.startswith("aarch64") else "x86_64"
     addon = args.addon_dir
-    for name in ("input_relay.gd", "input_relay.gd.uid"):
+    for name in ("input_relay.gd", "input_relay.gd.uid", "icon.svg"):
         source = ROOT / "demo/addons/kyber" / name
         destination = addon / name
         if source.resolve() != destination.resolve():
