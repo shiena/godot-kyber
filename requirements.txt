@@ -1,0 +1,3 @@
+# SPDX-FileCopyrightText: 2026 KOGA Mitsuhiro
+# SPDX-License-Identifier: MIT
+Markdown==3.11.3
